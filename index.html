@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>원가 계산기</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f9;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+    .container {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        width: 350px;
+    }
+    h2 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    label {
+        font-weight: bold;
+        display: block;
+        margin-top: 15px;
+    }
+    input {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+    }
+    .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .type-btn {
+        flex: 1;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #2d6cdf;
+        background: white;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .type-btn.active {
+        background: #2d6cdf;
+        color: white;
+    }
+    button.calculate {
+        width: 100%;
+        margin-top: 20px;
+        padding: 10px;
+        border-radius: 8px;
+        border: none;
+        background: #1b4db5;
+        color: white;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .result {
+        margin-top: 20px;
+        font-size: 20px;
+        font-weight: bold;
+        text-align: center;
+        cursor: pointer;
+        padding: 10px;
+        border-radius: 8px;
+        background: #f0f4ff;
+    }
+    .copied {
+        color: green;
+        font-size: 12px;
+        text-align: center;
+        margin-top: 5px;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>원가 계산기</h2>
+
+    <label>금액 입력</label>
+    <input type="number" id="amount" placeholder="금액 입력">
+
+    <label>환율 설정</label>
+    <input type="number" id="exchange" value="213">
+
+    <label>계 종류 선택</label>
+    <div class="button-group">
+        <button class="type-btn active" onclick="selectType('progress')" id="progressBtn">진행계</button>
+        <button class="type-btn" onclick="selectType('stone')" id="stoneBtn">돌계</button>
+    </div>
+
+    <button class="calculate" onclick="calculate()">계산하기</button>
+
+    <div class="result" id="result" onclick="copyResult()">원가:</div>
+    <div class="copied" id="copiedText"></div>
+</div>
+
+<script>
+let selectedType = "progress";
+
+function selectType(type) {
+    selectedType = type;
+    document.getElementById("progressBtn").classList.remove("active");
+    document.getElementById("stoneBtn").classList.remove("active");
+
+    if (type === "progress") {
+        document.getElementById("progressBtn").classList.add("active");
+    } else {
+        document.getElementById("stoneBtn").classList.add("active");
+    }
+}
+
+function calculate() {
+    const amount = parseFloat(document.getElementById("amount").value);
+    const exchange = parseFloat(document.getElementById("exchange").value);
+
+    if (isNaN(amount) || isNaN(exchange)) {
+        document.getElementById("result").innerText = "값을 입력하세요";
+        return;
+    }
+
+    let result;
+
+    if (selectedType === "progress") {
+        result = (amount - 12000) / 1.1 / exchange;
+    } else {
+        result = (amount - 4000) / 1.1 / exchange;
+    }
+
+    result = Math.floor(result); // 소수점 제거
+
+    document.getElementById("result").innerText = "원가: " + result.toLocaleString();
+    document.getElementById("copiedText").innerText = "";
+}
+
+function copyResult() {
+    const text = document.getElementById("result").innerText.replace("원가: ", "");
+    if (!text || text === "값을 입력하세요") return;
+
+    navigator.clipboard.writeText(text);
+    document.getElementById("copiedText").innerText = "복사되었습니다!";
+}
+
+// Enter 키로 계산
+document.addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        calculate();
+    }
+});
+</script>
+
+</body>
+</html>
