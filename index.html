@@ -3,11 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>계산기</title>
+<title>계 계산기</title>
 <style>
-* {
-    box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 body {
     font-family: Arial, sans-serif;
     background: #f4f6f9;
@@ -22,10 +20,7 @@ body {
     border-radius: 14px;
     box-shadow: 0 5px 20px rgba(0,0,0,0.1);
 }
-h2 {
-    text-align: center;
-    margin-bottom: 15px;
-}
+h2 { text-align: center; margin-bottom: 15px; }
 .mode-group, .type-group {
     display: flex;
     gap: 10px;
@@ -39,20 +34,10 @@ button {
     font-weight: bold;
     cursor: pointer;
 }
-.mode-btn {
-    background: #ddd;
-}
-.mode-btn.active {
-    background: #2d6cdf;
-    color: white;
-}
-.type-btn {
-    background: #eee;
-}
-.type-btn.active {
-    background: #1b4db5;
-    color: white;
-}
+.mode-btn { background: #ddd; }
+.mode-btn.active { background: #2d6cdf; color: white; }
+.type-btn { background: #eee; }
+.type-btn.active { background: #1b4db5; color: white; }
 input {
     width: 100%;
     padding: 12px;
@@ -61,10 +46,7 @@ input {
     border: 1px solid #ccc;
     font-size: 16px;
 }
-.calculate {
-    background: #28a745;
-    color: white;
-}
+.calculate { background: #28a745; color: white; }
 .result {
     margin-top: 15px;
     padding: 15px;
@@ -75,20 +57,14 @@ input {
     font-weight: bold;
     cursor: pointer;
 }
-.hidden {
-    display: none;
-}
-.note {
-    font-size: 12px;
-    text-align: center;
-    color: green;
-}
+.hidden { display: none; }
+.note { font-size: 12px; text-align: center; color: green; }
 </style>
 </head>
 <body>
 
 <div class="container">
-<h2>계산기</h2>
+<h2>계 계산기</h2>
 
 <div class="mode-group">
     <button class="mode-btn" onclick="switchMode('cost')" id="costMode">원가 계산기</button>
@@ -107,12 +83,15 @@ input {
     <input type="number" id="finalAmount" placeholder="최종 금액 입력">
 </div>
 
-<!-- 최종 금액 계산기 (기본 표시) -->
+<!-- 최종 금액 계산기 -->
 <div id="finalSection">
     <input type="number" id="accountCost" placeholder="계정 원가 입력">
-    <input type="number" id="insuranceCost" placeholder="보험비 (없으면 0)">
-    <input type="number" id="phoneCost" value="15" placeholder="일회용 번호 (기본 15)">
-    <input type="number" id="serviceCost" value="16" placeholder="서비스료 (기본 16)">
+
+    <div id="progressExtra">
+        <input type="number" id="insuranceCost" placeholder="보험비 (없으면 0)">
+        <input type="number" id="phoneCost" value="15" placeholder="일회용 번호 (기본 15)">
+        <input type="number" id="serviceCost" value="16" placeholder="서비스료 (기본 16)">
+    </div>
 </div>
 
 <input type="number" id="exchange" value="213" placeholder="환율">
@@ -125,7 +104,7 @@ input {
 </div>
 
 <script>
-let mode = "final";  // 기본은 최종 금액 계산기
+let mode = "final";
 let type = "progress";
 
 function switchMode(selected) {
@@ -151,8 +130,10 @@ function selectType(selected) {
 
     if (selected === "progress") {
         document.getElementById("progressBtn").classList.add("active");
+        document.getElementById("progressExtra").style.display = "block";
     } else {
         document.getElementById("stoneBtn").classList.add("active");
+        document.getElementById("progressExtra").style.display = "none";
     }
 }
 
@@ -170,20 +151,25 @@ function calculate() {
             ? (finalAmount - 12000) / 1.1 / exchange
             : (finalAmount - 4000) / 1.1 / exchange;
 
+        result = Math.floor(result); // 원가 계산은 버림
+
     } else {
         const accountCost = parseFloat(document.getElementById("accountCost").value);
-        const phoneCost = parseFloat(document.getElementById("phoneCost").value) || 0;
-        const serviceCost = parseFloat(document.getElementById("serviceCost").value) || 0;
-        const insuranceCost = parseFloat(document.getElementById("insuranceCost").value) || 0;
-
         if (isNaN(accountCost)) return;
 
-        result = type === "progress"
-            ? (accountCost + phoneCost + serviceCost + insuranceCost) * exchange * 1.1 + 12000
-            : accountCost * exchange * 1.1 + 4000;
+        if (type === "progress") {
+            const phoneCost = parseFloat(document.getElementById("phoneCost").value) || 0;
+            const serviceCost = parseFloat(document.getElementById("serviceCost").value) || 0;
+            const insuranceCost = parseFloat(document.getElementById("insuranceCost").value) || 0;
+
+            result = (accountCost + phoneCost + serviceCost + insuranceCost) * exchange * 1.1 + 12000;
+        } else {
+            result = accountCost * exchange * 1.1 + 4000;
+        }
+
+        result = Math.ceil(result); // 최종 금액은 올림
     }
 
-    result = Math.floor(result);
     document.getElementById("result").innerText = "결과: " + result.toLocaleString();
     document.getElementById("copiedText").innerText = "";
 }
