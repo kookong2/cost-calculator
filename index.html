@@ -48,17 +48,17 @@ input {
 }
 .calculate { background: #28a745; color: white; }
 .result {
-    margin-top: 15px;
-    padding: 15px;
+    margin-top: 10px;
+    padding: 12px;
     background: #f0f4ff;
     border-radius: 10px;
     text-align: center;
-    font-size: 20px;
+    font-size: 16px;
     font-weight: bold;
     cursor: pointer;
 }
 .hidden { display: none; }
-.note { font-size: 12px; text-align: center; color: green; }
+.note { font-size: 12px; text-align: center; color: green; margin-top:5px; }
 </style>
 </head>
 <body>
@@ -75,8 +75,6 @@ input {
     <button class="type-btn active" onclick="selectType('progress')" id="progressBtn">진행계</button>
     <button class="type-btn" onclick="selectType('stone')" id="stoneBtn">돌계</button>
 </div>
-
-
 
 <!-- 원가 계산기 -->
 <div id="costSection" class="hidden">
@@ -98,7 +96,11 @@ input {
 
 <button class="calculate" onclick="calculate()">계산하기</button>
 
-<div class="result" id="result" onclick="copyResult()">결과:</div>
+<div class="result" id="result" onclick="copyText('result')"></div>
+<div class="result" id="result1" onclick="copyText('result1')"></div>
+<div class="result" id="result2" onclick="copyText('result2')"></div>
+<div class="result" id="result3" onclick="copyText('result3')"></div>
+
 <div class="note" id="copiedText"></div>
 
 </div>
@@ -141,43 +143,65 @@ function calculate() {
     const exchange = parseFloat(document.getElementById("exchange").value);
     if (isNaN(exchange)) return;
 
-    let result;
-
     if (mode === "cost") {
         const finalAmount = parseFloat(document.getElementById("finalAmount").value);
         if (isNaN(finalAmount)) return;
 
-        result = type === "progress"
+        let result = type === "progress"
             ? (finalAmount - 12000) / 1.1 / exchange
             : (finalAmount - 4000) / 1.1 / exchange;
 
-        result = Math.floor(result); // 원가 계산은 버림
+        result = Math.floor(result);
 
+        document.getElementById("result").innerText = "결과: " + result.toLocaleString();
+        document.getElementById("result1").innerText = "";
+        document.getElementById("result2").innerText = "";
+        document.getElementById("result3").innerText = "";
     } else {
+
         const accountCost = parseFloat(document.getElementById("accountCost").value);
         if (isNaN(accountCost)) return;
 
         if (type === "progress") {
+
             const phoneCost = parseFloat(document.getElementById("phoneCost").value) || 0;
             const serviceCost = parseFloat(document.getElementById("serviceCost").value) || 0;
             const insuranceCost = parseFloat(document.getElementById("insuranceCost").value) || 0;
 
-            result = (accountCost + phoneCost + serviceCost + insuranceCost) * exchange * 1.1 + 12000;
-        } else {
-            result = accountCost * exchange * 1.1 + 4000;
-        }
+            const basePrice = (accountCost + phoneCost + serviceCost + insuranceCost) * exchange * 1.1 + 12000;
+            const noInsurancePrice = (accountCost + phoneCost + serviceCost) * exchange * 1.1 + 12000;
+            const hiChinaInsurance = accountCost * 0.15;
+            const hiChinaPrice = (accountCost + phoneCost + serviceCost + hiChinaInsurance) * exchange * 1.1 + 12000;
 
-        result = Math.ceil(result); // 최종 금액은 올림
+            const finalBase = Math.ceil(basePrice);
+            const finalNoInsurance = Math.ceil(noInsurancePrice);
+            const finalHiChina = Math.ceil(hiChinaPrice);
+
+            document.getElementById("result").innerText = finalBase.toLocaleString() + "원";
+            document.getElementById("result1").innerText =
+                "보험 및 중국 일회용 번호(30일 유효 포함) " + finalBase.toLocaleString() + "원 입니다^^";
+            document.getElementById("result2").innerText =
+                "보험비 미포함 가격 " + finalNoInsurance.toLocaleString() + "원 입니다.";
+            document.getElementById("result3").innerText =
+                "하이차이나 보험 가격 " + finalHiChina.toLocaleString() + "원 입니다.";
+
+        } else {
+            const stonePrice = accountCost * exchange * 1.1 + 4000;
+            const finalStone = Math.ceil(stonePrice);
+
+            document.getElementById("result").innerText = finalStone.toLocaleString() + "원";
+            document.getElementById("result1").innerText = "";
+            document.getElementById("result2").innerText = "";
+            document.getElementById("result3").innerText = "";
+        }
     }
 
-    document.getElementById("result").innerText = "결과: " + result.toLocaleString();
     document.getElementById("copiedText").innerText = "";
 }
 
-function copyResult() {
-    const text = document.getElementById("result").innerText.replace("결과: ", "");
+function copyText(id) {
+    const text = document.getElementById(id).innerText;
     if (!text) return;
-
     navigator.clipboard.writeText(text);
     document.getElementById("copiedText").innerText = "복사되었습니다!";
 }
