@@ -18,9 +18,12 @@ body {
     background: white;
     padding: 20px;
     border-radius: 14px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
 }
-h2 { text-align: center; margin-bottom: 15px; }
+h2 {
+    text-align: center;
+    margin-bottom: 15px;
+}
 .mode-group, .type-group {
     display: flex;
     gap: 10px;
@@ -56,9 +59,15 @@ input {
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
+    white-space: pre-wrap;
 }
 .hidden { display: none; }
-.note { font-size: 12px; text-align: center; color: green; margin-top:5px; }
+.note {
+    font-size: 12px;
+    text-align: center;
+    color: green;
+    margin-top: 5px;
+}
 </style>
 </head>
 <body>
@@ -67,42 +76,52 @@ input {
 <h2>계산기</h2>
 
 <div class="mode-group">
-    <button class="mode-btn" onclick="switchMode('cost')" id="costMode">원가 계산기</button>
-    <button class="mode-btn active" onclick="switchMode('final')" id="finalMode">최종 금액 계산기</button>
+    <button class="mode-btn" onclick="switchMode('cost')" id="costMode">원가 계산</button>
+    <button class="mode-btn active" onclick="switchMode('final')" id="finalMode">금액 전달</button>
+    <button class="mode-btn" onclick="switchMode('message')" id="messageMode">멘트 복사</button>
 </div>
 
-<div class="type-group">
-    <button class="type-btn active" onclick="selectType('progress')" id="progressBtn">진행계</button>
-    <button class="type-btn" onclick="selectType('stone')" id="stoneBtn">돌계</button>
-</div>
-
-<!-- 원가 계산기 -->
-<div id="costSection" class="hidden">
-    <input type="number" id="finalAmount" placeholder="최종 금액 입력">
-</div>
-
-<!-- 최종 금액 계산기 -->
-<div id="finalSection">
-    <input type="number" id="accountCost" placeholder="계정 원가 입력">
-
-    <div id="progressExtra">
-        <input type="number" id="insuranceCost" placeholder="보험비 (없으면 0)">
-        <input type="number" id="phoneCost" value="15" placeholder="일회용 번호 (기본 15)">
-        <input type="number" id="serviceCost" value="16" placeholder="서비스료 (기본 16)">
+<div id="calculatorArea">
+    <div class="type-group">
+        <button class="type-btn active" onclick="selectType('progress')" id="progressBtn">진행계</button>
+        <button class="type-btn" onclick="selectType('stone')" id="stoneBtn">돌계</button>
     </div>
+
+    <div id="costSection" class="hidden">
+        <input type="number" id="finalAmount" placeholder="최종 금액 입력">
+    </div>
+
+    <div id="finalSection">
+        <input type="number" id="accountCost" placeholder="계정 원가 입력">
+
+        <div id="progressExtra">
+            <input type="number" id="insuranceCost" placeholder="보험비 (없으면 0)">
+            <input type="number" id="phoneCost" value="15" placeholder="중국 전화번호 비용 (기본 15)">
+            <input type="number" id="serviceCost" value="16" placeholder="서비스료 (기본 16)">
+        </div>
+    </div>
+
+    <input type="number" id="exchange" value="222" placeholder="환율">
+
+    <button class="calculate" id="calculateButton" onclick="calculate()">계산하기</button>
+
+    <div class="result" id="result" onclick="copyText('result')"></div>
+    <div class="result" id="result1" onclick="copyText('result1')"></div>
+    <div class="result" id="result2" onclick="copyText('result2')"></div>
+    <div class="result" id="result3" onclick="copyText('result3')"></div>
+    <div class="result" id="result4" onclick="copyText('result4')"></div>
+    <div class="result" id="result5" onclick="copyText('result5')"></div>
 </div>
 
-<input type="number" id="exchange" value="222" placeholder="환율">
-
-<button class="calculate" onclick="calculate()">계산하기</button>
-
-<div class="result" id="result" onclick="copyText('result')"></div>
-<div class="result" id="result1" onclick="copyText('result1')"></div>
-<div class="result" id="result2" onclick="copyText('result2')"></div>
-<div class="result" id="result3" onclick="copyText('result3')"></div>
+<div id="messageSection" class="hidden">
+    <div class="result" id="message1" onclick="copyText('message1')">판매자 답변을 기다리는 중이므로 기다려주시면 감사드리겠습니다!</div>
+    <div class="result" id="message2" onclick="copyText('message2')">확인해주시고 문제 없으면 이메일과 전화번호 입력해주세요.</div>
+    <div class="result" id="message3" onclick="copyText('message3')">전화번호 변경 및 비밀번호 변경 후 말씀해주세요.</div>
+    <div class="result" id="message4" onclick="copyText('message4')">링크 주시면 금액 확인해드리겠습니다.</div>
+    <div class="result" id="message5" onclick="copyText('message5')">환불 신청 넣겠습니다. 환불은 익일 중으로 처리될 예정입니다.</div>
+</div>
 
 <div class="note" id="copiedText"></div>
-
 </div>
 
 <script>
@@ -113,15 +132,24 @@ function switchMode(selected) {
     mode = selected;
     document.getElementById("costMode").classList.remove("active");
     document.getElementById("finalMode").classList.remove("active");
+    document.getElementById("messageMode").classList.remove("active");
 
     if (selected === "cost") {
         document.getElementById("costMode").classList.add("active");
+        document.getElementById("calculatorArea").classList.remove("hidden");
+        document.getElementById("messageSection").classList.add("hidden");
         document.getElementById("costSection").classList.remove("hidden");
         document.getElementById("finalSection").classList.add("hidden");
-    } else {
+    } else if (selected === "final") {
         document.getElementById("finalMode").classList.add("active");
+        document.getElementById("calculatorArea").classList.remove("hidden");
+        document.getElementById("messageSection").classList.add("hidden");
         document.getElementById("finalSection").classList.remove("hidden");
         document.getElementById("costSection").classList.add("hidden");
+    } else {
+        document.getElementById("messageMode").classList.add("active");
+        document.getElementById("calculatorArea").classList.add("hidden");
+        document.getElementById("messageSection").classList.remove("hidden");
     }
 }
 
@@ -139,7 +167,17 @@ function selectType(selected) {
     }
 }
 
+function clearExtraResults() {
+    document.getElementById("result1").innerText = "";
+    document.getElementById("result2").innerText = "";
+    document.getElementById("result3").innerText = "";
+    document.getElementById("result4").innerText = "";
+    document.getElementById("result5").innerText = "";
+}
+
 function calculate() {
+    if (mode === "message") return;
+
     const exchange = parseFloat(document.getElementById("exchange").value);
     if (isNaN(exchange)) return;
 
@@ -154,45 +192,44 @@ function calculate() {
         result = Math.floor(result);
 
         document.getElementById("result").innerText = "결과: " + result.toLocaleString();
-        document.getElementById("result1").innerText = "";
-        document.getElementById("result2").innerText = "";
-        document.getElementById("result3").innerText = "";
+        clearExtraResults();
     } else {
-
         const accountCost = parseFloat(document.getElementById("accountCost").value);
         if (isNaN(accountCost)) return;
 
         if (type === "progress") {
-
             const phoneCost = parseFloat(document.getElementById("phoneCost").value) || 0;
             const serviceCost = parseFloat(document.getElementById("serviceCost").value) || 0;
             const insuranceCost = parseFloat(document.getElementById("insuranceCost").value) || 0;
 
             const basePrice = (accountCost + phoneCost + serviceCost + insuranceCost) * exchange * 1.1 + 12000;
             const noInsurancePrice = (accountCost + phoneCost + serviceCost) * exchange * 1.1 + 12000;
-            const hiChinaInsurance = accountCost * 0.15;
-            const hiChinaPrice = (accountCost + phoneCost + serviceCost + hiChinaInsurance) * exchange * 1.1 + 12000;
+            const hiChinaInsurance = Math.ceil(accountCost * 0.15);
+            const hiChinaChinaCost = Math.ceil(accountCost + hiChinaInsurance + phoneCost + serviceCost);
+            const hiChinaPrice = hiChinaChinaCost * exchange * 1.1 + 12000;
 
             const finalBase = Math.ceil(basePrice);
             const finalNoInsurance = Math.ceil(noInsurancePrice);
             const finalHiChina = Math.ceil(hiChinaPrice);
 
-            document.getElementById("result").innerText = finalBase.toLocaleString() + "원";
+            document.getElementById("result").innerText =
+                finalBase.toLocaleString();
             document.getElementById("result1").innerText =
-                "보험 및 중국 일회용 번호(30일 유효 포함) " + finalBase.toLocaleString() + "원 입니다^^";
+                "보험 및 중국 전화번호(30일 유효 포함) " + finalBase.toLocaleString() + "입니다^^.";
             document.getElementById("result2").innerText =
-                "보험비 미포함 가격 " + finalNoInsurance.toLocaleString() + "원 입니다.";
+                "보험비 미포함 가격 " + finalNoInsurance.toLocaleString() + "입니다^^.";
             document.getElementById("result3").innerText =
-                "하이차이나 보험 가격 " + finalHiChina.toLocaleString() + "원 입니다.";
-
+                "하이차이나 보험 가격 " + finalHiChina.toLocaleString() + "입니다^^.";
+            document.getElementById("result4").innerText =
+                "보험비 포함 구매해주세요";
+            document.getElementById("result5").innerText =
+                "하이차이나 보험 " + hiChinaChinaCost.toLocaleString() + "위안 구매해주세요";
         } else {
             const stonePrice = accountCost * exchange * 1.1 + 4000;
             const finalStone = Math.ceil(stonePrice);
 
-            document.getElementById("result").innerText = finalStone.toLocaleString() + "원";
-            document.getElementById("result1").innerText = "";
-            document.getElementById("result2").innerText = "";
-            document.getElementById("result3").innerText = "";
+            document.getElementById("result").innerText = finalStone.toLocaleString();
+            clearExtraResults();
         }
     }
 
@@ -203,7 +240,7 @@ function copyText(id) {
     const text = document.getElementById(id).innerText;
     if (!text) return;
     navigator.clipboard.writeText(text);
-    document.getElementById("copiedText").innerText = "복사되었습니다!";
+    document.getElementById("copiedText").innerText = "복사되었습니다.";
 }
 
 document.addEventListener("keydown", function(event) {
