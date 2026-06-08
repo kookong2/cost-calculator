@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>계산기</title>
+<meta name="theme-color" content="#2d6cdf">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="대행 계산기">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>대행 계산기</title>
 <style>
 * { box-sizing: border-box; }
 body {
@@ -73,7 +80,7 @@ input {
 <body>
 
 <div class="container">
-<h2>계산기</h2>
+<h2>대행 계산기</h2>
 
 <div class="mode-group">
     <button class="mode-btn" onclick="switchMode('cost')" id="costMode">원가 계산</button>
@@ -212,8 +219,7 @@ function calculate() {
             const finalNoInsurance = Math.ceil(noInsurancePrice);
             const finalHiChina = Math.ceil(hiChinaPrice);
 
-            document.getElementById("result").innerText =
-                finalBase.toLocaleString();
+            document.getElementById("result").innerText = finalBase.toLocaleString();
             document.getElementById("result1").innerText =
                 "보험 및 중국 전화번호(30일 유효 포함) " + finalBase.toLocaleString() + "입니다^^.";
             document.getElementById("result2").innerText =
@@ -246,6 +252,12 @@ function copyText(id) {
 document.addEventListener("keydown", function(event) {
     if (event.key === "Enter") calculate();
 });
+
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function() {
+        navigator.serviceWorker.register("./sw.js");
+    });
+}
 </script>
 
 </body>
