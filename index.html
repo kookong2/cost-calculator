@@ -108,7 +108,7 @@ input {
         </div>
     </div>
 
-    <input type="number" id="exchange" value="230" placeholder="환율">
+    <input type="number" id="exchange" value="219" placeholder="환율">
 
     <button class="calculate" id="calculateButton" onclick="calculate()">계산하기</button>
 
@@ -198,7 +198,7 @@ function calculate() {
 
         result = Math.floor(result);
 
-        document.getElementById("result").innerText = "결과: " + result.toLocaleString();
+        document.getElementById("result").innerText = result.toLocaleString();
         clearExtraResults();
     } else {
         const accountCost = parseFloat(document.getElementById("accountCost").value);
