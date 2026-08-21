@@ -68,6 +68,22 @@ input {
     cursor: pointer;
     white-space: pre-wrap;
 }
+.result-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.result-row .result {
+    flex: 1;
+}
+.yuan-info {
+    flex: 0 0 auto;
+    color: #555;
+    font-size: 14px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+.yuan-info:empty { display: none; }
 .hidden { display: none; }
 .note {
     font-size: 12px;
@@ -113,9 +129,18 @@ input {
     <button class="calculate" id="calculateButton" onclick="calculate()">계산하기</button>
 
     <div class="result" id="result" onclick="copyText('result')"></div>
-    <div class="result" id="result1" onclick="copyText('result1')"></div>
-    <div class="result" id="result2" onclick="copyText('result2')"></div>
-    <div class="result" id="result3" onclick="copyText('result3')"></div>
+    <div class="result-row">
+        <div class="result" id="result1" onclick="copyText('result1')"></div>
+        <span class="yuan-info" id="yuan1"></span>
+    </div>
+    <div class="result-row">
+        <div class="result" id="result2" onclick="copyText('result2')"></div>
+        <span class="yuan-info" id="yuan2"></span>
+    </div>
+    <div class="result-row">
+        <div class="result" id="result3" onclick="copyText('result3')"></div>
+        <span class="yuan-info" id="yuan3"></span>
+    </div>
     <div class="result" id="result4" onclick="copyText('result4')"></div>
     <div class="result" id="result5" onclick="copyText('result5')"></div>
 </div>
@@ -180,6 +205,9 @@ function clearExtraResults() {
     document.getElementById("result3").innerText = "";
     document.getElementById("result4").innerText = "";
     document.getElementById("result5").innerText = "";
+    document.getElementById("yuan1").innerText = "";
+    document.getElementById("yuan2").innerText = "";
+    document.getElementById("yuan3").innerText = "";
 }
 
 function calculate() {
@@ -209,8 +237,10 @@ function calculate() {
             const serviceCost = parseFloat(document.getElementById("serviceCost").value) || 0;
             const insuranceCost = parseFloat(document.getElementById("insuranceCost").value) || 0;
 
-            const basePrice = (accountCost + phoneCost + serviceCost + insuranceCost) * exchange * 1.1 + 12000;
-            const noInsurancePrice = (accountCost + phoneCost + serviceCost) * exchange * 1.1 + 12000;
+            const baseChinaCost = accountCost + phoneCost + serviceCost + insuranceCost;
+            const noInsuranceChinaCost = accountCost + phoneCost + serviceCost;
+            const basePrice = baseChinaCost * exchange * 1.1 + 12000;
+            const noInsurancePrice = noInsuranceChinaCost * exchange * 1.1 + 12000;
             const hiChinaInsurance = Math.ceil(accountCost * 0.15);
             const hiChinaChinaCost = Math.ceil(accountCost + hiChinaInsurance + phoneCost + serviceCost);
             const hiChinaPrice = hiChinaChinaCost * exchange * 1.1 + 12000;
@@ -226,6 +256,9 @@ function calculate() {
                 "보험비 미포함 가격 " + finalNoInsurance.toLocaleString() + "입니다^^.";
             document.getElementById("result3").innerText =
                 "하이차이나 보험 가격 " + finalHiChina.toLocaleString() + "입니다^^.";
+            document.getElementById("yuan1").innerText = baseChinaCost.toLocaleString() + "위안";
+            document.getElementById("yuan2").innerText = noInsuranceChinaCost.toLocaleString() + "위안";
+            document.getElementById("yuan3").innerText = hiChinaChinaCost.toLocaleString() + "위안";
             document.getElementById("result4").innerText =
                 "보험비 포함 구매해주세요";
             document.getElementById("result5").innerText =
