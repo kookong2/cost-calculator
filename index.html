@@ -110,6 +110,11 @@ input, select {
     white-space: nowrap;
 }
 .ledger-add:disabled { background: #aaa; cursor: default; }
+.ledger-actions {
+    display: grid;
+    gap: 8px;
+}
+.ledger-actions .ledger-add { width: 100%; }
 .ledger-status {
     min-height: 18px;
     color: #1b5e20;
@@ -172,6 +177,12 @@ input, select {
             <input type="date" id="ledgerTradeDate" aria-label="거래일자">
         </div>
         <input type="text" id="ledgerMemo" placeholder="메모 (선택)">
+        <div class="ledger-actions">
+            <button class="ledger-add hidden" id="ledgerBtnCost" onclick="addToLedger('cost')">원가 계산 결과 장부 입력</button>
+            <button class="ledger-add hidden" id="ledgerBtn1" onclick="addToLedger('base')">보험 포함 장부 입력</button>
+            <button class="ledger-add hidden" id="ledgerBtn2" onclick="addToLedger('noInsurance')">보험 미포함 장부 입력</button>
+            <button class="ledger-add hidden" id="ledgerBtn3" onclick="addToLedger('hiChina')">하이차이나 보험 장부 입력</button>
+        </div>
         <div class="ledger-status" id="ledgerStatus"></div>
     </details>
 
@@ -181,17 +192,14 @@ input, select {
     <div class="result-row">
         <div class="result" id="result1" onclick="copyText('result1')"></div>
         <span class="yuan-info" id="yuan1"></span>
-        <button class="ledger-add hidden" id="ledgerBtn1" onclick="addToLedger('base')">장부 추가</button>
     </div>
     <div class="result-row">
         <div class="result" id="result2" onclick="copyText('result2')"></div>
         <span class="yuan-info" id="yuan2"></span>
-        <button class="ledger-add hidden" id="ledgerBtn2" onclick="addToLedger('noInsurance')">장부 추가</button>
     </div>
     <div class="result-row">
         <div class="result" id="result3" onclick="copyText('result3')"></div>
         <span class="yuan-info" id="yuan3"></span>
-        <button class="ledger-add hidden" id="ledgerBtn3" onclick="addToLedger('hiChina')">장부 추가</button>
     </div>
     <div class="result" id="result4" onclick="copyText('result4')"></div>
     <div class="result" id="result5" onclick="copyText('result5')"></div>
@@ -215,8 +223,25 @@ let type = "progress";
 let ledgerResults = {};
 const LEDGER_ENDPOINT = "https://script.google.com/macros/s/AKfycbyUZq0GIQZtMWLrUpvStZvq7-iuAGG5i0ql2_9YDCtTqLMQb6qn1iYByPUIk1IZIoDn/exec";
 
+function resetLedgerActions() {
+    const buttonLabels = {
+        ledgerBtnCost: "원가 계산 결과 장부 입력",
+        ledgerBtn1: "보험 포함 장부 입력",
+        ledgerBtn2: "보험 미포함 장부 입력",
+        ledgerBtn3: "하이차이나 보험 장부 입력"
+    };
+    ledgerResults = {};
+    Object.keys(buttonLabels).forEach(function(id) {
+        const button = document.getElementById(id);
+        button.classList.add("hidden");
+        button.disabled = false;
+        button.innerText = buttonLabels[id];
+    });
+}
+
 function switchMode(selected) {
     mode = selected;
+    resetLedgerActions();
     document.getElementById("costMode").classList.remove("active");
     document.getElementById("finalMode").classList.remove("active");
     document.getElementById("messageMode").classList.remove("active");
@@ -263,13 +288,7 @@ function clearExtraResults() {
     document.getElementById("yuan1").innerText = "";
     document.getElementById("yuan2").innerText = "";
     document.getElementById("yuan3").innerText = "";
-    ledgerResults = {};
-    ["ledgerBtn1", "ledgerBtn2", "ledgerBtn3"].forEach(function(id) {
-        const button = document.getElementById(id);
-        button.classList.add("hidden");
-        button.disabled = false;
-        button.innerText = "장부 추가";
-    });
+    resetLedgerActions();
 }
 
 function calculate() {
@@ -288,8 +307,15 @@ function calculate() {
 
         result = Math.floor(result);
 
-        document.getElementById("result").innerText = result.toLocaleString();
         clearExtraResults();
+        document.getElementById("result").innerText = result.toLocaleString();
+        ledgerResults = {
+            cost: { yuan: result, sales: finalAmount, requestId: createRequestId() }
+        };
+        const costButton = document.getElementById("ledgerBtnCost");
+        costButton.classList.remove("hidden");
+        costButton.disabled = false;
+        costButton.innerText = "원가 계산 결과 장부 입력";
     } else {
         const accountCost = parseFloat(document.getElementById("accountCost").value);
         if (isNaN(accountCost)) return;
@@ -326,11 +352,16 @@ function calculate() {
                 noInsurance: { yuan: noInsuranceChinaCost, sales: finalNoInsurance, requestId: createRequestId() },
                 hiChina: { yuan: hiChinaChinaCost, sales: finalHiChina, requestId: createRequestId() }
             };
-            ["ledgerBtn1", "ledgerBtn2", "ledgerBtn3"].forEach(function(id) {
+            const buttonLabels = {
+                ledgerBtn1: "보험 포함 장부 입력",
+                ledgerBtn2: "보험 미포함 장부 입력",
+                ledgerBtn3: "하이차이나 보험 장부 입력"
+            };
+            Object.keys(buttonLabels).forEach(function(id) {
                 const button = document.getElementById(id);
                 button.classList.remove("hidden");
                 button.disabled = false;
-                button.innerText = "장부 추가";
+                button.innerText = buttonLabels[id];
             });
             document.getElementById("result4").innerText =
                 "보험비 포함 구매해주세요";
@@ -381,7 +412,7 @@ function addToLedger(resultType) {
         return;
     }
 
-    const buttonIds = { base: "ledgerBtn1", noInsurance: "ledgerBtn2", hiChina: "ledgerBtn3" };
+    const buttonIds = { cost: "ledgerBtnCost", base: "ledgerBtn1", noInsurance: "ledgerBtn2", hiChina: "ledgerBtn3" };
     const button = document.getElementById(buttonIds[resultType]);
     button.disabled = true;
     button.innerText = "전송됨";
