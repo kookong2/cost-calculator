@@ -48,7 +48,7 @@ button {
 .mode-btn.active { background: #2d6cdf; color: white; }
 .type-btn { background: #eee; }
 .type-btn.active { background: #1b4db5; color: white; }
-input {
+input, select {
     width: 100%;
     padding: 12px;
     margin-bottom: 12px;
@@ -75,6 +75,7 @@ input {
 }
 .result-row .result {
     flex: 1;
+    min-width: 0;
 }
 .yuan-info {
     flex: 0 0 auto;
@@ -84,6 +85,42 @@ input {
     white-space: nowrap;
 }
 .yuan-info:empty { display: none; }
+.ledger-section {
+    margin: 12px 0;
+    padding: 12px;
+    border: 1px solid #d8e2f5;
+    border-radius: 10px;
+    background: #f8faff;
+}
+.ledger-section summary {
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+.ledger-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 10px;
+}
+.ledger-add {
+    flex: 0 0 auto;
+    padding: 8px 10px;
+    background: #ff9800;
+    color: white;
+    white-space: nowrap;
+}
+.ledger-add:disabled { background: #aaa; cursor: default; }
+.ledger-config {
+    width: 100%;
+    background: #607d8b;
+    color: white;
+}
+.ledger-status {
+    min-height: 18px;
+    color: #1b5e20;
+    font-size: 12px;
+    text-align: center;
+}
 .hidden { display: none; }
 .note {
     font-size: 12px;
@@ -126,20 +163,41 @@ input {
 
     <input type="number" id="exchange" value="213" placeholder="환율">
 
+    <details class="ledger-section" id="ledgerSection" open>
+        <summary>장부 입력 정보</summary>
+        <input type="text" id="ledgerPurchaseCode" placeholder="구매코드 또는 아이템 URL">
+        <div class="ledger-grid">
+            <select id="ledgerPaymentMethod" aria-label="결제수단">
+                <option value="">결제수단 선택</option>
+                <option value="qr충전">qr충전</option>
+                <option value="qr결제">qr결제</option>
+                <option value="오전결제">오전결제</option>
+                <option value="재화결제">재화결제</option>
+            </select>
+            <input type="date" id="ledgerTradeDate" aria-label="거래일자">
+        </div>
+        <input type="text" id="ledgerMemo" placeholder="메모 (선택)">
+        <button class="ledger-config" type="button" onclick="configureLedger()">장부 연동 설정</button>
+        <div class="ledger-status" id="ledgerStatus"></div>
+    </details>
+
     <button class="calculate" id="calculateButton" onclick="calculate()">계산하기</button>
 
     <div class="result" id="result" onclick="copyText('result')"></div>
     <div class="result-row">
         <div class="result" id="result1" onclick="copyText('result1')"></div>
         <span class="yuan-info" id="yuan1"></span>
+        <button class="ledger-add hidden" id="ledgerBtn1" onclick="addToLedger('base')">장부 추가</button>
     </div>
     <div class="result-row">
         <div class="result" id="result2" onclick="copyText('result2')"></div>
         <span class="yuan-info" id="yuan2"></span>
+        <button class="ledger-add hidden" id="ledgerBtn2" onclick="addToLedger('noInsurance')">장부 추가</button>
     </div>
     <div class="result-row">
         <div class="result" id="result3" onclick="copyText('result3')"></div>
         <span class="yuan-info" id="yuan3"></span>
+        <button class="ledger-add hidden" id="ledgerBtn3" onclick="addToLedger('hiChina')">장부 추가</button>
     </div>
     <div class="result" id="result4" onclick="copyText('result4')"></div>
     <div class="result" id="result5" onclick="copyText('result5')"></div>
@@ -154,11 +212,15 @@ input {
 </div>
 
 <div class="note" id="copiedText"></div>
+<iframe class="hidden" id="ledgerFrame" name="ledgerFrame" title="장부 전송"></iframe>
 </div>
 
 <script>
 let mode = "final";
 let type = "progress";
+let ledgerResults = {};
+const LEDGER_ENDPOINT = "https://script.google.com/macros/s/AKfycbyUZq0GIQZtMWLrUpvStZvq7-iuAGG5i0ql2_9YDCtTqLMQb6qn1iYByPUIk1IZIoDn/exec";
+const LEDGER_KEY_STORAGE = "daehangLedgerAccessKey";
 
 function switchMode(selected) {
     mode = selected;
@@ -208,6 +270,13 @@ function clearExtraResults() {
     document.getElementById("yuan1").innerText = "";
     document.getElementById("yuan2").innerText = "";
     document.getElementById("yuan3").innerText = "";
+    ledgerResults = {};
+    ["ledgerBtn1", "ledgerBtn2", "ledgerBtn3"].forEach(function(id) {
+        const button = document.getElementById(id);
+        button.classList.add("hidden");
+        button.disabled = false;
+        button.innerText = "장부 추가";
+    });
 }
 
 function calculate() {
@@ -259,6 +328,17 @@ function calculate() {
             document.getElementById("yuan1").innerText = baseChinaCost.toLocaleString() + "위안";
             document.getElementById("yuan2").innerText = noInsuranceChinaCost.toLocaleString() + "위안";
             document.getElementById("yuan3").innerText = hiChinaChinaCost.toLocaleString() + "위안";
+            ledgerResults = {
+                base: { yuan: baseChinaCost, sales: finalBase, requestId: createRequestId() },
+                noInsurance: { yuan: noInsuranceChinaCost, sales: finalNoInsurance, requestId: createRequestId() },
+                hiChina: { yuan: hiChinaChinaCost, sales: finalHiChina, requestId: createRequestId() }
+            };
+            ["ledgerBtn1", "ledgerBtn2", "ledgerBtn3"].forEach(function(id) {
+                const button = document.getElementById(id);
+                button.classList.remove("hidden");
+                button.disabled = false;
+                button.innerText = "장부 추가";
+            });
             document.getElementById("result4").innerText =
                 "보험비 포함 구매해주세요";
             document.getElementById("result5").innerText =
@@ -282,6 +362,101 @@ function copyText(id) {
     document.getElementById("copiedText").innerText = "복사되었습니다.";
 }
 
+function createRequestId() {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") {
+        return window.crypto.randomUUID();
+    }
+    return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+}
+
+function configureLedger() {
+    const currentKey = localStorage.getItem(LEDGER_KEY_STORAGE) || "";
+    const accessKey = window.prompt("장부 연동키를 입력하세요.", currentKey);
+    if (accessKey === null) return;
+
+    if (!/^[a-f0-9]{48}$/.test(accessKey.trim())) {
+        document.getElementById("ledgerStatus").innerText = "올바른 연동키를 입력해주세요.";
+        return;
+    }
+
+    localStorage.setItem(LEDGER_KEY_STORAGE, accessKey.trim());
+    document.getElementById("ledgerStatus").innerText = "이 기기의 장부 연동 설정이 저장되었습니다.";
+}
+
+function addToLedger(resultType) {
+    const ledgerResult = ledgerResults[resultType];
+    if (!ledgerResult) return;
+
+    const accessKey = localStorage.getItem(LEDGER_KEY_STORAGE);
+    if (!accessKey) {
+        configureLedger();
+        if (!localStorage.getItem(LEDGER_KEY_STORAGE)) return;
+    }
+
+    const purchaseCode = document.getElementById("ledgerPurchaseCode").value.trim();
+    const paymentMethod = document.getElementById("ledgerPaymentMethod").value;
+    const tradeDate = document.getElementById("ledgerTradeDate").value;
+    const memo = document.getElementById("ledgerMemo").value.trim();
+
+    if (!purchaseCode && !paymentMethod) {
+        document.getElementById("ledgerStatus").innerText = "구매코드 또는 결제수단을 입력해주세요.";
+        document.getElementById("ledgerSection").open = true;
+        return;
+    }
+    if (!tradeDate) {
+        document.getElementById("ledgerStatus").innerText = "거래일자를 입력해주세요.";
+        return;
+    }
+
+    const buttonIds = { base: "ledgerBtn1", noInsurance: "ledgerBtn2", hiChina: "ledgerBtn3" };
+    const button = document.getElementById(buttonIds[resultType]);
+    button.disabled = true;
+    button.innerText = "전송됨";
+
+    const fields = {
+        key: localStorage.getItem(LEDGER_KEY_STORAGE),
+        yuan: ledgerResult.yuan,
+        sales: ledgerResult.sales,
+        purchaseCode: purchaseCode,
+        paymentMethod: paymentMethod,
+        memo: memo,
+        tradeDate: tradeDate,
+        requestId: ledgerResult.requestId
+    };
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = LEDGER_ENDPOINT;
+    form.target = "ledgerFrame";
+
+    Object.keys(fields).forEach(function(name) {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = fields[name];
+        form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+    form.remove();
+    document.getElementById("ledgerStatus").innerText = "장부 대기열로 전송 요청했습니다.";
+}
+
+function initializeLedger() {
+    const today = new Date();
+    const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000)
+        .toISOString().slice(0, 10);
+    document.getElementById("ledgerTradeDate").value = localDate;
+
+    const hashParams = new URLSearchParams(window.location.hash.slice(1));
+    const setupKey = hashParams.get("ledger-key");
+    if (/^[a-f0-9]{48}$/.test(setupKey || "")) {
+        localStorage.setItem(LEDGER_KEY_STORAGE, setupKey);
+        history.replaceState(null, "", window.location.pathname + window.location.search);
+        document.getElementById("ledgerStatus").innerText = "이 기기의 장부 연동 설정이 완료되었습니다.";
+    }
+}
+
 document.addEventListener("keydown", function(event) {
     if (event.key === "Enter") calculate();
 });
@@ -291,6 +466,8 @@ if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("./sw.js");
     });
 }
+
+initializeLedger();
 </script>
 
 </body>
