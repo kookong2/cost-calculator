@@ -1,4 +1,4 @@
-const CACHE_NAME = "daehang-calculator-v7";
+const CACHE_NAME = "daehang-calculator-v8";
 const APP_SHELL = [
   "./",
   "./index.html",

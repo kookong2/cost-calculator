@@ -163,7 +163,7 @@ input, select {
 
     <input type="number" id="exchange" value="213" placeholder="환율">
 
-    <details class="ledger-section" id="ledgerSection" open>
+    <details class="ledger-section hidden" id="ledgerSection" open>
         <summary>장부 입력 정보</summary>
         <input type="text" id="ledgerPurchaseCode" placeholder="구매코드 또는 아이템 URL">
         <div class="ledger-grid">
@@ -176,6 +176,8 @@ input, select {
             </select>
             <input type="date" id="ledgerTradeDate" aria-label="거래일자">
         </div>
+        <label for="ledgerTradeTime">거래 시간</label>
+        <input type="time" id="ledgerTradeTime" aria-label="거래 시간">
         <input type="text" id="ledgerMemo" placeholder="메모 (선택)">
         <div class="ledger-actions">
             <button class="ledger-add hidden" id="ledgerBtnCost" onclick="addToLedger('cost')">원가 계산 결과 장부 입력</button>
@@ -242,6 +244,7 @@ function resetLedgerActions() {
 function switchMode(selected) {
     mode = selected;
     resetLedgerActions();
+    document.getElementById("ledgerSection").classList.toggle("hidden", selected !== "cost");
     document.getElementById("costMode").classList.remove("active");
     document.getElementById("finalMode").classList.remove("active");
     document.getElementById("messageMode").classList.remove("active");
@@ -394,12 +397,14 @@ function createRequestId() {
 }
 
 function addToLedger(resultType) {
+    if (mode !== "cost" || resultType !== "cost") return;
     const ledgerResult = ledgerResults[resultType];
     if (!ledgerResult) return;
 
     const purchaseCode = document.getElementById("ledgerPurchaseCode").value.trim();
     const paymentMethod = document.getElementById("ledgerPaymentMethod").value;
     const tradeDate = document.getElementById("ledgerTradeDate").value;
+    const tradeTime = document.getElementById("ledgerTradeTime").value;
     const memo = document.getElementById("ledgerMemo").value.trim();
 
     if (!purchaseCode && !paymentMethod) {
@@ -409,6 +414,10 @@ function addToLedger(resultType) {
     }
     if (!tradeDate) {
         document.getElementById("ledgerStatus").innerText = "거래일자를 입력해주세요.";
+        return;
+    }
+    if (!tradeTime) {
+        document.getElementById("ledgerStatus").innerText = "거래 시간을 입력해주세요.";
         return;
     }
 
@@ -422,8 +431,9 @@ function addToLedger(resultType) {
         sales: ledgerResult.sales,
         purchaseCode: purchaseCode,
         paymentMethod: paymentMethod,
-        memo: memo,
+        memo: [memo, "거래 시간 " + tradeTime].filter(Boolean).join(" / "),
         tradeDate: tradeDate,
+        tradeTime: tradeTime,
         requestId: ledgerResult.requestId
     };
     const form = document.createElement("form");
@@ -450,6 +460,8 @@ function initializeLedger() {
     const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000)
         .toISOString().slice(0, 10);
     document.getElementById("ledgerTradeDate").value = localDate;
+    document.getElementById("ledgerTradeTime").value =
+        String(today.getHours()).padStart(2, "0") + ":" + String(today.getMinutes()).padStart(2, "0");
 
 }
 
